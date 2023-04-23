@@ -32,12 +32,15 @@ class CannedResponses(private val plugin: CorePlugin) : WhModule {
 
     init {
         for (response in config().responses) {
-            plugin.commandManager.buildCommand(CommandCreatorFunction { m -> m
-                .commandBuilder(response.key)
-                .handler { c ->
-                    c.sender.sendMessage(plugin.messages.miniMessage.deserialize(response.value))
+            plugin.commandManager.buildCommand(
+                CommandCreatorFunction { m ->
+                    m
+                        .commandBuilder(response.key)
+                        .handler { c ->
+                            c.sender.sendMessage(plugin.messages.miniMessage.deserialize(response.value))
+                        }
                 }
-            })
+            )
         }
     }
 

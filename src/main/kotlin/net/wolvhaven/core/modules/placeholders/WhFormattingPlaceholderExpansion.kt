@@ -54,4 +54,3 @@ class WhFormattingPlaceholderExpansion(private val placeholders: WhPlaceholders)
         else -> PlainTextComponentSerializer.plainText()
     }
 }
-

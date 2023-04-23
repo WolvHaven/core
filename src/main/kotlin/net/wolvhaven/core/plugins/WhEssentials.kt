@@ -19,8 +19,8 @@
 package net.wolvhaven.core.plugins
 
 import com.earth2me.essentials.Essentials
-import net.wolvhaven.core.util.getPlugin
 import net.wolvhaven.core.util.PlayerCollection
+import net.wolvhaven.core.util.getPlugin
 import org.bukkit.entity.Player
 
 object WhEssentials {

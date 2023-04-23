@@ -32,7 +32,7 @@ data class PlayerCollection(val players: MutableCollection<Player>) : Forwarding
     fun filtered(filter: (Player) -> Boolean): PlayerCollection = PlayerCollection(players.filter(filter).toMutableSet())
     fun withPermission(permission: String) = filtered { it.hasPermission(permission) }
 
-    fun toAudienceCollection() = AudienceCollection(this.players.map { it as Audience }.toMutableList())
+    fun toAudienceCollection() = AudienceCollection(this.players.map { it }.toMutableList())
 }
 
 val onlinePlayers get() = server.onlinePlayers.toMutableList().playerCollection

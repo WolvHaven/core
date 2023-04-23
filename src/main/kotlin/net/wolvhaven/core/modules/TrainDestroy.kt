@@ -19,7 +19,6 @@
 package net.wolvhaven.core.modules
 
 import net.wolvhaven.core.CorePlugin
-import net.wolvhaven.core.locale.Messages
 import net.wolvhaven.core.util.*
 import org.bukkit.scheduler.BukkitTask
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
@@ -40,35 +39,41 @@ class TrainDestroy(private val plugin: CorePlugin) : WhModule {
 
     var nextRun: Instant = Instant.now().plus(config().firstRun, ChronoUnit.MINUTES)
     var hasNotified = false
-    val timeRemaining: String get() = minuteSecond.format(nextRun.minus(System.currentTimeMillis(), ChronoUnit.MILLIS).atOffset(
-        ZoneOffset.UTC))
+    val timeRemaining: String get() = minuteSecond.format(
+        nextRun.minus(System.currentTimeMillis(), ChronoUnit.MILLIS).atOffset(
+            ZoneOffset.UTC
+        )
+    )
 
     init {
         val base = CommandCreatorFunction {
             it.commandBuilder("traindestroy")
         }
 
-        plugin.commandManager.buildCommand(base) { b -> b
-            .literal("now")
-            .permission(permissionNow)
-            .handler {
-                nextRun = Instant.now().minus(1, ChronoUnit.MILLIS)
-            }
+        plugin.commandManager.buildCommand(base) { b ->
+            b
+                .literal("now")
+                .permission(permissionNow)
+                .handler {
+                    nextRun = Instant.now().minus(1, ChronoUnit.MILLIS)
+                }
         }
-        plugin.commandManager.buildCommand(base) { b -> b
-            .literal("info", "i", "when")
-            .handler {
-                it.sender.sendMessage(plugin.messages.trainDestroy.info(timeRemaining, config().frequency, config().firstRun))
-            }
+        plugin.commandManager.buildCommand(base) { b ->
+            b
+                .literal("info", "i", "when")
+                .handler {
+                    it.sender.sendMessage(plugin.messages.trainDestroy.info(timeRemaining, config().frequency, config().firstRun))
+                }
         }
-        plugin.commandManager.buildCommand(base) { b -> b
-            .literal("delay")
-            .permission(permissionDelay)
-            .handler {
-                nextRun = nextRun.plus(config().delay, ChronoUnit.MINUTES)
-                hasNotified = false
-                server.sendMessage(plugin.messages.trainDestroy.delayed(config().delay, it.sender))
-            }
+        plugin.commandManager.buildCommand(base) { b ->
+            b
+                .literal("delay")
+                .permission(permissionDelay)
+                .handler {
+                    nextRun = nextRun.plus(config().delay, ChronoUnit.MINUTES)
+                    hasNotified = false
+                    server.sendMessage(plugin.messages.trainDestroy.delayed(config().delay, it.sender))
+                }
         }
     }
 

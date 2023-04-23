@@ -32,14 +32,13 @@ import net.wolvhaven.core.util.config
 import org.bukkit.command.CommandSender
 import org.bukkit.command.ConsoleCommandSender
 import org.bukkit.entity.Player
-import java.io.File
 
 class Messages(private val plugin: CorePlugin) {
     val config = config<MessagesConfig>("messages", plugin).also {
         it.load()
         it.save()
     }
-    
+
     private val resolver = TagResolver.builder()
         .resolver(TagResolver.standard())
         .tag("whprefix") { args, _ ->
@@ -66,7 +65,8 @@ class Messages(private val plugin: CorePlugin) {
 
     val trainDestroy = TrainDestroy()
     inner class TrainDestroy {
-        fun info(destroyIn: String, frequency: Long, firstRun: Long) = miniMessage.deserialize(config().trainDestroy.info,
+        fun info(destroyIn: String, frequency: Long, firstRun: Long) = miniMessage.deserialize(
+            config().trainDestroy.info,
             placeholders(
                 "destroy-in" to destroyIn,
                 "frequency" to frequency,
@@ -74,11 +74,13 @@ class Messages(private val plugin: CorePlugin) {
             )
         )
 
-        fun delayed(delay: Long, sender: CommandSender) = miniMessage.deserialize(config().trainDestroy.delayed,
+        fun delayed(delay: Long, sender: CommandSender) = miniMessage.deserialize(
+            config().trainDestroy.delayed,
             placeholders("delay" to delay, "sender" to sender.name)
         )
 
-        fun warning(destroyIn: String) = miniMessage.deserialize(config().trainDestroy.warning,
+        fun warning(destroyIn: String) = miniMessage.deserialize(
+            config().trainDestroy.warning,
             placeholders("destroy-in" to destroyIn)
         )
 
@@ -96,23 +98,28 @@ class Messages(private val plugin: CorePlugin) {
 
         fun promptEnable() = miniMessage.deserialize(config().cPolicing.promptEnable)
 
-        fun isNowState(state: String) = miniMessage.deserialize(config().cPolicing.isNowState,
+        fun isNowState(state: String) = miniMessage.deserialize(
+            config().cPolicing.isNowState,
             placeholders("state" to state)
         )
 
-        fun isAlreadyState(state: String) = miniMessage.deserialize(config().cPolicing.isAlreadyState,
+        fun isAlreadyState(state: String) = miniMessage.deserialize(
+            config().cPolicing.isAlreadyState,
             placeholders("state" to state)
         )
 
-        fun playerExempt(target: Player) = miniMessage.deserialize(config().cPolicing.playerExempt,
+        fun playerExempt(target: Player) = miniMessage.deserialize(
+            config().cPolicing.playerExempt,
             placeholders("target" to target.name)
         )
 
-        fun alreadyVoted(target: Player) = miniMessage.deserialize(config().cPolicing.alreadyVoted,
+        fun alreadyVoted(target: Player) = miniMessage.deserialize(
+            config().cPolicing.alreadyVoted,
             placeholders("target" to target.name)
         )
 
-        fun vote(source: Player, target: Player, totalVotes: Int, threshold: Int) = miniMessage.deserialize(config().cPolicing.vote,
+        fun vote(source: Player, target: Player, totalVotes: Int, threshold: Int) = miniMessage.deserialize(
+            config().cPolicing.vote,
             placeholders(
                 "source" to source.name,
                 "target" to target.name,
@@ -121,7 +128,8 @@ class Messages(private val plugin: CorePlugin) {
             )
         )
 
-        fun banned(target: Player) = miniMessage.deserialize(config().cPolicing.banned,
+        fun banned(target: Player) = miniMessage.deserialize(
+            config().cPolicing.banned,
             placeholders("target" to target.name)
         )
     }
@@ -130,7 +138,8 @@ class Messages(private val plugin: CorePlugin) {
     inner class InvisibleItemFrames {
         fun itemName(isGlow: Boolean) = miniMessage.deserialize(if (isGlow) config().invisibleItemFrames.glowItemName else config().invisibleItemFrames.itemName)
 
-        fun giveSuccess(isGlow: Boolean) = miniMessage.deserialize(config().invisibleItemFrames.giveSuccess,
+        fun giveSuccess(isGlow: Boolean) = miniMessage.deserialize(
+            config().invisibleItemFrames.giveSuccess,
             placeholders("item" to itemName(isGlow))
         )
 
@@ -139,38 +148,44 @@ class Messages(private val plugin: CorePlugin) {
 
     val core = Core()
     inner class Core {
-        fun broadcast(message: String, source: CommandSender) = miniMessage.deserialize(config().core.broadcast,
+        fun broadcast(message: String, source: CommandSender) = miniMessage.deserialize(
+            config().core.broadcast,
             placeholders(
                 "message" to message,
                 "source" to if (source is ConsoleCommandSender) "Console" else source.name
             )
         )
 
-        fun reloadSuccess(module: String) = miniMessage.deserialize(config().core.reloadSuccess,
+        fun reloadSuccess(module: String) = miniMessage.deserialize(
+            config().core.reloadSuccess,
             placeholders("module" to module)
         )
 
-        fun reloadFail(module: String, reason: String) = miniMessage.deserialize(config().core.reloadFail,
+        fun reloadFail(module: String, reason: String) = miniMessage.deserialize(
+            config().core.reloadFail,
             placeholders(
                 "module" to module,
                 "cause" to reason
             )
         )
     }
-    
+
     companion object {
         fun command(commandString: String) = Component
             .text(commandString, Style.style(TextDecoration.UNDERLINED))
             .clickEvent(ClickEvent.runCommand(commandString))
 
-        fun placeholders(vararg pairs: Pair<String, Any>) : TagResolver {
+        fun placeholders(vararg pairs: Pair<String, Any>): TagResolver {
             val tags = pairs.map {
-                TagResolver.resolver(it.first, when (it.second) {
-                    is Component -> Tag.selfClosingInserting(it.second as Component)
-                    is ComponentLike -> Tag.selfClosingInserting(it.second as ComponentLike)
-                    is String -> Tag.preProcessParsed(it.second as String)
-                    else -> Tag.preProcessParsed(it.second.toString())
-                })
+                TagResolver.resolver(
+                    it.first,
+                    when (it.second) {
+                        is Component -> Tag.selfClosingInserting(it.second as Component)
+                        is ComponentLike -> Tag.selfClosingInserting(it.second as ComponentLike)
+                        is String -> Tag.preProcessParsed(it.second as String)
+                        else -> Tag.preProcessParsed(it.second.toString())
+                    }
+                )
             }
             return TagResolver.resolver(tags)
         }

@@ -20,7 +20,6 @@ package net.wolvhaven.core.modules
 
 import cloud.commandframework.arguments.flags.CommandFlag
 import net.wolvhaven.core.CorePlugin
-import net.wolvhaven.core.locale.Messages
 import net.wolvhaven.core.util.buildCommand
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -41,26 +40,27 @@ class InvisibleItemFrames(private val plugin: CorePlugin) : WhModule, Listener {
 
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
-        plugin.commandManager.buildCommand({ it.commandBuilder("itemframe", "if") }) { b -> b
-            .flag(CommandFlag.builder("glow"))
-            .permission("$permissionRoot.itemframe")
-            .senderType(Player::class.java)
-            .handler {
-                val p = it.sender as Player
-                val glow = it.flags().isPresent("glow")
-                val stack = ItemStack(if (glow) Material.GLOW_ITEM_FRAME else Material.ITEM_FRAME)
-                stack.editMeta { m ->
-                    m.persistentDataContainer[invisItemFrameKey, PersistentDataType.BYTE] = 1
-                    m.displayName(plugin.messages.invisibleItemFrames.itemName(glow))
-                    m.addEnchant(Enchantment.DURABILITY, 1, true)
-                    m.addItemFlags(ItemFlag.HIDE_ENCHANTS)
+        plugin.commandManager.buildCommand({ it.commandBuilder("itemframe", "if") }) { b ->
+            b
+                .flag(CommandFlag.builder("glow"))
+                .permission("$permissionRoot.itemframe")
+                .senderType(Player::class.java)
+                .handler {
+                    val p = it.sender as Player
+                    val glow = it.flags().isPresent("glow")
+                    val stack = ItemStack(if (glow) Material.GLOW_ITEM_FRAME else Material.ITEM_FRAME)
+                    stack.editMeta { m ->
+                        m.persistentDataContainer[invisItemFrameKey, PersistentDataType.BYTE] = 1
+                        m.displayName(plugin.messages.invisibleItemFrames.itemName(glow))
+                        m.addEnchant(Enchantment.DURABILITY, 1, true)
+                        m.addItemFlags(ItemFlag.HIDE_ENCHANTS)
+                    }
+                    if (p.inventory.addItem(stack).isEmpty()) {
+                        p.sendMessage(plugin.messages.invisibleItemFrames.giveSuccess(glow))
+                    } else {
+                        p.sendMessage(plugin.messages.invisibleItemFrames.giveFail())
+                    }
                 }
-                if (p.inventory.addItem(stack).isEmpty()) {
-                    p.sendMessage(plugin.messages.invisibleItemFrames.giveSuccess(glow))
-                } else {
-                    p.sendMessage(plugin.messages.invisibleItemFrames.giveFail())
-                }
-            }
         }
     }
 

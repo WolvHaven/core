@@ -60,6 +60,10 @@ tasks {
 //        jvmArgs("-DLog4jContextSelector=org.apache.logging.log4j.core.selector.ClassLoaderContextSelector") // https://github.com/PaperMC/Paper/issues/4155
         jvmArgs("-Ddisable.watchdog=true")
     }
+
+    shadowJar {
+        archiveClassifier.set("")
+    }
 }
 
 bukkit {

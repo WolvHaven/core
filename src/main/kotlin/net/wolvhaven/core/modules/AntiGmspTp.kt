@@ -19,7 +19,6 @@
 package net.wolvhaven.core.modules
 
 import net.wolvhaven.core.CorePlugin
-import net.wolvhaven.core.locale.Messages
 import net.wolvhaven.core.util.cancel
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener

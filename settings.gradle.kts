@@ -20,7 +20,6 @@
 
 rootProject.name = "whcore"
 
-
 dependencyResolutionManagement {
     repositories {
         mavenCentral()

@@ -20,7 +20,6 @@ package net.wolvhaven.core.modules.placeholders
 
 import net.wolvhaven.core.CorePlugin
 import net.wolvhaven.core.modules.WhModule
-import net.wolvhaven.core.modules.placeholders.WhCorePlaceholderExpansion
 
 class WhPlaceholders(val plugin: CorePlugin) : WhModule {
     private val core = WhCorePlaceholderExpansion(this)

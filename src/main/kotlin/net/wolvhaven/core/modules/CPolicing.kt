@@ -20,7 +20,6 @@ package net.wolvhaven.core.modules
 
 import cloud.commandframework.bukkit.parsers.PlayerArgument
 import net.wolvhaven.core.CorePlugin
-import net.wolvhaven.core.locale.Messages
 import net.wolvhaven.core.util.*
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -45,43 +44,46 @@ class CPolicing(private val plugin: CorePlugin) : WhModule {
             it.commandBuilder("cpolicing", "cpolice")
         }
 
-        plugin.commandManager.buildCommand(base) { b -> b
-            .literal("enable")
-            .permission(permissionAdmin)
-            .handler {
-                if (config().enabled)
-                    return@handler it.sender.sendMessage(plugin.messages.cPolicing.isAlreadyState("enabled"))
-                config().enabled = true
-                config.save()
-                server.sendMessage(plugin.messages.cPolicing.isNowState("enabled"))
-            }
+        plugin.commandManager.buildCommand(base) { b ->
+            b
+                .literal("enable")
+                .permission(permissionAdmin)
+                .handler {
+                    if (config().enabled)
+                        return@handler it.sender.sendMessage(plugin.messages.cPolicing.isAlreadyState("enabled"))
+                    config().enabled = true
+                    config.save()
+                    server.sendMessage(plugin.messages.cPolicing.isNowState("enabled"))
+                }
         }
 
-        plugin.commandManager.buildCommand(base) { b -> b
-            .literal("disable")
-            .permission(permissionAdmin)
-            .handler {
-                if (!config().enabled)
-                    return@handler it.sender.sendMessage(plugin.messages.cPolicing.isAlreadyState("disabled"))
-                config().enabled = false
-                config.save()
-                server.sendMessage(plugin.messages.cPolicing.isNowState("disabled"))
-            }
+        plugin.commandManager.buildCommand(base) { b ->
+            b
+                .literal("disable")
+                .permission(permissionAdmin)
+                .handler {
+                    if (!config().enabled)
+                        return@handler it.sender.sendMessage(plugin.messages.cPolicing.isAlreadyState("disabled"))
+                    config().enabled = false
+                    config.save()
+                    server.sendMessage(plugin.messages.cPolicing.isNowState("disabled"))
+                }
         }
 
-        plugin.commandManager.buildCommand(base) { b -> b
-            .literal("vote", "v")
-            .permission(permissionVote)
-            .senderType(Player::class.java)
-            .argument(PlayerArgument.of("target"))
-            .handler {
-                if (!checkEnabled(it.sender)) return@handler
-                val sender = it.sender as Player
-                val target = it.get("target") as Player
-                if (target.hasPermission(permissionExempt))
-                    return@handler it.sender.sendMessage(plugin.messages.cPolicing.playerExempt(target))
-                vote(sender, target)
-            }
+        plugin.commandManager.buildCommand(base) { b ->
+            b
+                .literal("vote", "v")
+                .permission(permissionVote)
+                .senderType(Player::class.java)
+                .argument(PlayerArgument.of("target"))
+                .handler {
+                    if (!checkEnabled(it.sender)) return@handler
+                    val sender = it.sender as Player
+                    val target = it.get("target") as Player
+                    if (target.hasPermission(permissionExempt))
+                        return@handler it.sender.sendMessage(plugin.messages.cPolicing.playerExempt(target))
+                    vote(sender, target)
+                }
         }
     }
 

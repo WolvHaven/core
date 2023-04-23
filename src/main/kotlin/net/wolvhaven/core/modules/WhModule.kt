@@ -27,7 +27,7 @@ interface WhModule {
     /**
      * Will only be called on modules with ReloadType.RELOAD_METHOD
      * @see ReloadType.RELOAD_METHOD
-    */
+     */
     fun reload() {}
 }
 
