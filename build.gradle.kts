@@ -53,6 +53,7 @@ kotlin {
 configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
     disabledRules.add("no-wildcard-imports")
 }
+
 tasks {
     named<RunServerTask>("runServer") {
         dependsOn(shadowJar)
@@ -60,9 +61,23 @@ tasks {
 //        jvmArgs("-DLog4jContextSelector=org.apache.logging.log4j.core.selector.ClassLoaderContextSelector") // https://github.com/PaperMC/Paper/issues/4155
         jvmArgs("-Ddisable.watchdog=true")
     }
+    build {
+        dependsOn(shadowJar)
+    }
 
     shadowJar {
         archiveClassifier.set("")
+        listOf(
+            "org.spongepowered",
+            "org.jetbrains",
+            "org.intellij",
+            "kotlin",
+            "io.leangen",
+            "com.typesafe",
+            "cloud.commandframework"
+        ).forEach {
+            relocate(it, "net.wolvhaven.core.relocated.$it")
+        }
     }
 }
 
