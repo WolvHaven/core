@@ -71,7 +71,7 @@ class TrainDestroy(private val plugin: CorePlugin) : WhModule {
     ) {
         nextRun = nextRun.plus(minutes, ChronoUnit.MINUTES)
         hasNotified = false
-        server.sendMessage(plugin.messages.trainDestroy.delayed(config().delay, source.source()))
+        server.sendMessage(plugin.messages.trainDestroy.delayed(minutes, source.source()))
     }
 
     override fun disable() {
