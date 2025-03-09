@@ -74,19 +74,6 @@ class Core(private val plugin: CorePlugin) : WhModule {
         if (ding) players.audience.playSound(Sounds.DING.sound)
     }
 
-    @Command("wolvhavencore|whcore|wh reload|rl plugin")
-    @Permission("whcore.reload")
-    fun reloadPluginCommand(source: Source) {
-        try {
-            plugin.bootstrap.reload()
-        } catch (e: Exception) {
-            source.source().sendMessage(plugin.messages.core.reloadFail("plugin", e.toString()))
-            logger().error("Plugin reload failed: ", e)
-            return
-        }
-        source.source().sendMessage(plugin.messages.core.reloadSuccess("plugin"))
-    }
-
     @Command("wolvhavencore|whcore|wh reload|rl messages")
     @Permission("whcore.reload")
     fun reloadMessagesCommand(source: Source) {

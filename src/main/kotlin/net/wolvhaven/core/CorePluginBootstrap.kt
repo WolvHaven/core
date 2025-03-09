@@ -32,9 +32,4 @@ class CorePluginBootstrap : JavaPlugin() {
         plugin.disable()
         _plugin = null
     }
-
-    fun reload() {
-        isEnabled = false
-        isEnabled = true
-    }
 }
