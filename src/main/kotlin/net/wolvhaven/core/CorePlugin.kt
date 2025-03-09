@@ -18,31 +18,36 @@
 
 package net.wolvhaven.core
 
-import cloud.commandframework.CommandManager
-import cloud.commandframework.execution.CommandExecutionCoordinator
-import cloud.commandframework.paper.PaperCommandManager
 import net.wolvhaven.core.locale.Messages
-import net.wolvhaven.core.modules.*
-import org.bukkit.command.CommandSender
+import net.wolvhaven.core.modules.WhModule
+import net.wolvhaven.core.modules.WhModuleType
 import org.bukkit.plugin.Plugin
-import java.util.*
+import org.incendo.cloud.CommandManager
+import org.incendo.cloud.annotations.AnnotationParser
+import org.incendo.cloud.execution.ExecutionCoordinator
+import org.incendo.cloud.kotlin.coroutines.annotations.installCoroutineSupport
+import org.incendo.cloud.paper.PaperCommandManager
+import org.incendo.cloud.paper.util.sender.PaperSimpleSenderMapper
+import org.incendo.cloud.paper.util.sender.Source
+import java.util.EnumMap
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 
 class CorePlugin(val bootstrap: CorePluginBootstrap) : Plugin by bootstrap {
-    val commandManager: CommandManager<CommandSender> = PaperCommandManager(
-        bootstrap,
-        CommandExecutionCoordinator.simpleCoordinator(),
-        { it }, { it }
-    ).also {
-        it.registerAsynchronousCompletions()
-        it.registerBrigadier()
-        it.setSetting(CommandManager.ManagerSettings.ALLOW_UNSAFE_REGISTRATION, true)
-    }
     val executorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+
+    val commandManager: CommandManager<Source> =
+        PaperCommandManager
+            .builder(PaperSimpleSenderMapper.simpleSenderMapper())
+            .executionCoordinator(ExecutionCoordinator.coordinatorFor(executorService))
+            .buildOnEnable(bootstrap)
+
+    val annotationParser = AnnotationParser(commandManager, Source::class.java).installCoroutineSupport()
+
     val messages = Messages(this)
 
     val modules: MutableMap<WhModuleType, WhModule> = EnumMap(WhModuleType::class.java)
+
     init {
         modules.putAll(WhModuleType.values().associateWith { it.creator(this) })
     }

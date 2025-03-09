@@ -37,10 +37,3 @@ dependencyResolutionManagement {
 
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 }
-
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        maven("https://repo.jpenilla.xyz/snapshots/") // for shadow snapshot
-    }
-}

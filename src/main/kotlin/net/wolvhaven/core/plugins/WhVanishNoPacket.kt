@@ -18,7 +18,6 @@
 
 package net.wolvhaven.core.plugins
 
-import net.wolvhaven.core.util.PlayerCollection
 import net.wolvhaven.core.util.getPlugin
 import org.bukkit.entity.Player
 import org.kitteh.vanish.VanishPlugin
@@ -30,12 +29,15 @@ object WhVanishNoPacket {
 
     var Player.vanished
         get() = vanishManager.isVanished(this)
-        set(value) = if (value)
-            vanishManager.vanish(this, true, false)
-        else vanishManager.reveal(this, true, false)
+        set(value) =
+            if (value) {
+                vanishManager.vanish(this, true, false)
+            } else {
+                vanishManager.reveal(this, true, false)
+            }
 
-    val PlayerCollection.vanished get() = this.filtered { it.vanished }
-    val PlayerCollection.unvanished get() = this.filtered { !it.vanished }
+    val Iterable<Player>.vanished get() = this.filter { it.vanished }
+    val Iterable<Player>.unvanished get() = this.filter { !it.vanished }
 
-    fun PlayerCollection.canSee(viewer: Player): PlayerCollection = filtered { viewer.canSee(it) }
+    fun Iterable<Player>.canSee(viewer: Player): Iterable<Player> = this.filter { viewer.canSee(it) }
 }

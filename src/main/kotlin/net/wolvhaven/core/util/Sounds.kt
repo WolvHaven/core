@@ -27,8 +27,8 @@ enum class Sounds(val sound: Sound) {
             Key.key("minecraft:entity.experience_orb.pickup"),
             Sound.Source.MASTER,
             1F,
-            1F
-        )
+            1F,
+        ),
     ),
 
     CLANG(
@@ -36,7 +36,7 @@ enum class Sounds(val sound: Sound) {
             Key.key("minecraft:block.anvil.land"),
             Sound.Source.MASTER,
             1F,
-            1F
-        )
-    )
+            1F,
+        ),
+    ),
 }

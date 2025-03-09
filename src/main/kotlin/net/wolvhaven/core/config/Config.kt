@@ -33,11 +33,13 @@ class Config<T>(private val type: Class<T>, private val file: File) {
             throw IllegalStateException("Config objects have to be annotated with ConfigSerializable!")
         }
 
-        this.loader = HoconConfigurationLoader.builder()
-            .defaultOptions {
-                it.shouldCopyDefaults(true)
-            }.file(this.file)
-            .build()
+        this.loader =
+            HoconConfigurationLoader
+                .builder()
+                .defaultOptions {
+                    it.shouldCopyDefaults(true)
+                }.file(this.file)
+                .build()
         this.configNode = this.loader.load()
         this.config = this.configNode.get(this.type) ?: throw IllegalStateException("Null Config")
     }

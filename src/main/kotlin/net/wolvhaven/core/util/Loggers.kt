@@ -16,15 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.wolvhaven.core.plugins
+package net.wolvhaven.core.util
 
-import net.luckperms.api.LuckPermsProvider
-import net.wolvhaven.core.util.get
-import net.wolvhaven.core.util.getPlayerAdapter
-import org.bukkit.entity.Player
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-object WhLuckperms {
-    val lp get() = LuckPermsProvider.get()
-
-    val Player.luckperms get() = lp.getPlayerAdapter<Player>()[this]
-}
+fun logger(): Logger = LoggerFactory.getLogger(StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE).callerClass)

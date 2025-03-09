@@ -19,8 +19,13 @@
 package net.wolvhaven.core.modules
 
 import net.wolvhaven.core.CorePlugin
-import net.wolvhaven.core.util.*
+import net.wolvhaven.core.util.config
+import net.wolvhaven.core.util.minuteSecond
+import net.wolvhaven.core.util.server
 import org.bukkit.scheduler.BukkitTask
+import org.incendo.cloud.annotations.Command
+import org.incendo.cloud.annotations.Permission
+import org.incendo.cloud.paper.util.sender.Source
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import java.time.Instant
 import java.time.ZoneOffset
@@ -28,57 +33,39 @@ import java.time.temporal.ChronoUnit
 
 class TrainDestroy(private val plugin: CorePlugin) : WhModule {
     private val task: BukkitTask = plugin.server.scheduler.runTaskTimer(plugin, this::run, 10, 10)
-    val config = config<TrainDestroyConfig>("trainDestroy", plugin).also {
-        it.load()
-        it.save()
-    }
-
-    val permRoot = "${net.wolvhaven.core.CorePlugin.permRoot}.traindestroy"
-    val permissionDelay = "$permRoot.delay"
-    val permissionNow = "$permRoot.now"
+    val config =
+        config<TrainDestroyConfig>("trainDestroy", plugin).also {
+            it.load()
+            it.save()
+        }
 
     var nextRun: Instant = Instant.now().plus(config().firstRun, ChronoUnit.MINUTES)
     var hasNotified = false
-    val timeRemaining: String get() = minuteSecond.format(
-        nextRun.minus(System.currentTimeMillis(), ChronoUnit.MILLIS).atOffset(
-            ZoneOffset.UTC
+    val timeRemaining: String get() =
+        minuteSecond.format(
+            nextRun.minus(System.currentTimeMillis(), ChronoUnit.MILLIS).atOffset(
+                ZoneOffset.UTC,
+            ),
         )
-    )
 
     init {
-        val base = CommandCreatorFunction {
-            it.commandBuilder("traindestroy")
-        }
+        plugin.annotationParser.parse(this)
+    }
 
-        plugin.commandManager.buildCommand(base) { b ->
-            b
-                .literal("now")
-                .permission(permissionNow)
-                .handler {
-                    nextRun = Instant.now().minus(1, ChronoUnit.MILLIS)
-                }
-        }
-        plugin.commandManager.buildCommand(base) { b ->
-            b
-                .literal("info", "i", "when")
-                .handler {
-                    it.sender.sendMessage(plugin.messages.trainDestroy.info(timeRemaining, config().frequency, config().firstRun))
-                }
-        }
-        plugin.commandManager.buildCommand(base) { b ->
-            b
-                .literal("delay")
-                .permission(permissionDelay)
-                .handler {
-                    nextRun = nextRun.plus(config().delay, ChronoUnit.MINUTES)
-                    hasNotified = false
-                    server.sendMessage(plugin.messages.trainDestroy.delayed(config().delay, it.sender))
-                }
-        }
+    @Command("traindestroy info|i|when|status")
+    fun infoCommand(source: Source) {
+        source.source().sendMessage(plugin.messages.trainDestroy.info(timeRemaining, config().frequency, config().firstRun))
+    }
+
+    @Command("traindestroy now")
+    @Permission("whcore.traindestroy.now")
+    fun nowCommand(source: Source) {
+        nextRun = Instant.now().minus(1, ChronoUnit.MILLIS)
     }
 
     override fun disable() {
         task.cancel()
+        plugin.commandManager.deleteRootCommand("traindestroy")
     }
 
     private fun run() {
@@ -95,17 +82,11 @@ class TrainDestroy(private val plugin: CorePlugin) : WhModule {
         }
 
         if (now.isAfter(nextRun.minus(config().warning, ChronoUnit.MINUTES)) && !hasNotified) {
-
             server.sendMessage(plugin.messages.trainDestroy.warning(timeRemaining))
 
             hasNotified = true
             return
         }
-    }
-
-    override fun reload() {
-        config.load()
-        config.save()
     }
 }
 
@@ -115,5 +96,5 @@ data class TrainDestroyConfig(
     val warning: Long = 3,
     val firstRun: Long = 6,
     val delay: Long = 15,
-    val commands: List<String> = listOf("say Change this in the config!")
+    val commands: List<String> = listOf("say Change this in the config!"),
 )

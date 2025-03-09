@@ -31,8 +31,12 @@ class WhFormattingPlaceholderExpansion(private val placeholders: WhPlaceholders)
 
     override fun getAuthor() = "Underscore11"
 
-    override fun getVersion() = placeholders.plugin.description.version
-    override fun onRequest(player: OfflinePlayer?, params: String): String? {
+    override fun getVersion() = placeholders.plugin.pluginMeta.version
+
+    override fun onRequest(
+        player: OfflinePlayer?,
+        params: String,
+    ): String? {
         return try {
             val (split, content) = params.split("_", limit = 2)
             val (from, to) = split.split("-", limit = 2)
@@ -46,11 +50,12 @@ class WhFormattingPlaceholderExpansion(private val placeholders: WhPlaceholders)
         }
     }
 
-    private fun toSerializer(type: String) = when (type.lowercase()) {
-        "minimessage", "mini", "mm" -> placeholders.plugin.messages.miniMessage
-        "legacy", "l" -> LegacyComponentSerializer.legacyAmpersand()
-        "legacysec", "lsec" -> LegacyComponentSerializer.legacySection()
-        "json", "gson" -> GsonComponentSerializer.gson()
-        else -> PlainTextComponentSerializer.plainText()
-    }
+    private fun toSerializer(type: String) =
+        when (type.lowercase()) {
+            "minimessage", "mini", "mm" -> placeholders.plugin.messages.miniMessage
+            "legacy", "l" -> LegacyComponentSerializer.legacyAmpersand()
+            "legacysec", "lsec" -> LegacyComponentSerializer.legacySection()
+            "json", "gson" -> GsonComponentSerializer.gson()
+            else -> PlainTextComponentSerializer.plainText()
+        }
 }

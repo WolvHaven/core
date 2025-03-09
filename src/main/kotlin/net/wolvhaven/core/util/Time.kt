@@ -18,16 +18,12 @@
 
 package net.wolvhaven.core.util
 
-import net.wolvhaven.core.CorePlugin
-import net.wolvhaven.core.CorePluginBootstrap
-import net.wolvhaven.core.config.Config
-import java.io.File
-import java.util.*
+import java.time.format.DateTimeFormatterBuilder
+import java.time.temporal.ChronoField
 
-fun <T : Any, V : Any?> T?.mapIfPresent(fn: (T) -> V): V? = if (this != null) fn(this) else null
-
-val <T : Any> Optional<T>.value get() = if (this.isPresent) this.get() else null
-
-inline fun <reified C> config(file: File) = Config(C::class.java, file)
-inline fun <reified C> config(fileName: String, plugin: CorePlugin) = config<C>(File(plugin.dataFolder, "$fileName.conf"))
-inline fun <reified C> config(fileName: String, plugin: CorePluginBootstrap) = config<C>(File(plugin.dataFolder, "$fileName.conf"))
+val minuteSecond =
+    DateTimeFormatterBuilder()
+        .appendValue(ChronoField.MINUTE_OF_HOUR, 2)
+        .appendLiteral(':')
+        .appendValue(ChronoField.SECOND_OF_MINUTE, 2)
+        .toFormatter()
