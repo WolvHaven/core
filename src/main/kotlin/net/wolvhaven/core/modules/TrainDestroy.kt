@@ -63,6 +63,17 @@ class TrainDestroy(private val plugin: CorePlugin) : WhModule {
         nextRun = Instant.now().minus(1, ChronoUnit.MILLIS)
     }
 
+    @Command("traindestroy delay [minutes]")
+    @Permission("whcore.traindestroy.delay")
+    fun delayCommand(
+        source: Source,
+        minutes: Long = config().delay,
+    ) {
+        nextRun = nextRun.plus(minutes, ChronoUnit.MINUTES)
+        hasNotified = false
+        server.sendMessage(plugin.messages.trainDestroy.delayed(config().delay, source.source()))
+    }
+
     override fun disable() {
         task.cancel()
         plugin.commandManager.deleteRootCommand("traindestroy")
