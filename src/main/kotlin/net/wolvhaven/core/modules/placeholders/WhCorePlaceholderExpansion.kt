@@ -20,10 +20,9 @@ package net.wolvhaven.core.modules.placeholders
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion
 import net.wolvhaven.core.plugins.WhEssentials.afk
-import net.wolvhaven.core.plugins.WhVanishNoPacket.canSee
 import net.wolvhaven.core.plugins.WhVanishNoPacket.unvanished
 import net.wolvhaven.core.plugins.WhVanishNoPacket.vanished
-import net.wolvhaven.core.util.onlinePlayers
+import net.wolvhaven.core.util.server
 import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
@@ -33,11 +32,15 @@ class WhCorePlaceholderExpansion(private val placeholders: WhPlaceholders) : Pla
 
     override fun getAuthor() = "Underscore11"
 
-    override fun getVersion() = placeholders.plugin.description.version
-    override fun onRequest(player: OfflinePlayer?, params: String): String? {
+    override fun getVersion() = placeholders.plugin.pluginMeta.version
+
+    override fun onRequest(
+        player: OfflinePlayer?,
+        params: String,
+    ): String? {
         when (params) {
             "online" -> {
-                val players = if (player != null && player is Player) onlinePlayers.canSee(player) else onlinePlayers.unvanished
+                val players = server.onlinePlayers.filter { (player is Player && player.canSee(it)) || !it.vanished }
                 var out = "&f${players.unvanished.size}"
                 if (players.vanished.isNotEmpty()) out += "&b+${players.vanished.size}"
                 if (players.afk.isNotEmpty()) out += "&7-${players.afk.size}"

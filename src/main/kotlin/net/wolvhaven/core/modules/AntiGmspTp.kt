@@ -28,6 +28,7 @@ class AntiGmspTp(private val plugin: CorePlugin) : WhModule, Listener {
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
     }
+
     val perm = CorePlugin.permRoot + ".gmsptp"
 
     @EventHandler(ignoreCancelled = true)

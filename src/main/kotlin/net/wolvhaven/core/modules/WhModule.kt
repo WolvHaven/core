@@ -33,12 +33,12 @@ interface WhModule {
 
 enum class WhModuleType(val creator: (CorePlugin) -> WhModule, val reloadType: ReloadType = ReloadType.RECREATE) {
     ANTI_GMSP_TP({ AntiGmspTp(it) }),
-    CANNED_RESPONSES({ CannedResponses(it) }, ReloadType.RELOAD_METHOD),
+    CANNED_RESPONSES({ CannedResponses(it) }),
     CORE({ Core(it) }, ReloadType.NOT_RELOADABLE),
-    COMMUNITY_POLICING({ CPolicing(it) }, ReloadType.RELOAD_METHOD),
+    COMMUNITY_POLICING({ CPolicing(it) }),
     INVISIBLE_ITEM_FRAMES({ InvisibleItemFrames(it) }),
     PLACEHOLDERS({ WhPlaceholders(it) }),
-    TRAIN_DESTROY({ TrainDestroy(it) }, ReloadType.RELOAD_METHOD)
+    TRAIN_DESTROY({ TrainDestroy(it) }),
 }
 
 /**
@@ -49,12 +49,14 @@ enum class ReloadType {
      * WhModule#disable() will be called and a new instance will be created
      */
     RECREATE,
+
     /**
      * WhModule#reload() will be called. Designed for modules that register commands, since cloud doesn't like redefining commands
      */
     RELOAD_METHOD,
+
     /**
      * Module cannot be reloaded.
      */
-    NOT_RELOADABLE
+    NOT_RELOADABLE,
 }

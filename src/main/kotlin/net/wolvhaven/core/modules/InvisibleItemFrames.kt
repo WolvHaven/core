@@ -18,49 +18,49 @@
 
 package net.wolvhaven.core.modules
 
-import cloud.commandframework.arguments.flags.CommandFlag
 import net.wolvhaven.core.CorePlugin
-import net.wolvhaven.core.util.buildCommand
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.ItemFrame
-import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.hanging.HangingPlaceEvent
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
+import org.incendo.cloud.annotations.Command
+import org.incendo.cloud.annotations.Flag
+import org.incendo.cloud.annotations.Permission
+import org.incendo.cloud.paper.util.sender.PlayerSource
 
 // This class largely inspired by https://github.com/techchrism/survival-invisiframes/blob/9350fa3794cf958c3d248e432a0511619ed4cc5d/src/main/java/com/darkender/plugins/survivalinvisiframes/SurvivalInvisiframes.java
 class InvisibleItemFrames(private val plugin: CorePlugin) : WhModule, Listener {
-    private val permissionRoot = "${net.wolvhaven.core.CorePlugin.permRoot}.item"
     private val invisItemFrameKey = NamespacedKey(plugin, "invisible")
 
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
-        plugin.commandManager.buildCommand({ it.commandBuilder("itemframe", "if") }) { b ->
-            b
-                .flag(CommandFlag.builder("glow"))
-                .permission("$permissionRoot.itemframe")
-                .senderType(Player::class.java)
-                .handler {
-                    val p = it.sender as Player
-                    val glow = it.flags().isPresent("glow")
-                    val stack = ItemStack(if (glow) Material.GLOW_ITEM_FRAME else Material.ITEM_FRAME)
-                    stack.editMeta { m ->
-                        m.persistentDataContainer[invisItemFrameKey, PersistentDataType.BYTE] = 1
-                        m.displayName(plugin.messages.invisibleItemFrames.itemName(glow))
-                        m.addEnchant(Enchantment.DURABILITY, 1, true)
-                        m.addItemFlags(ItemFlag.HIDE_ENCHANTS)
-                    }
-                    if (p.inventory.addItem(stack).isEmpty()) {
-                        p.sendMessage(plugin.messages.invisibleItemFrames.giveSuccess(glow))
-                    } else {
-                        p.sendMessage(plugin.messages.invisibleItemFrames.giveFail())
-                    }
-                }
+        plugin.annotationParser.parse(this)
+    }
+
+    @Command("itemframe", requiredSender = PlayerSource::class)
+    @Permission("whcore.item")
+    fun giveCommand(
+        source: PlayerSource,
+        @Flag("glow", aliases = ["g"]) glow: Boolean,
+    ) {
+        val p = source.source()
+        val stack = ItemStack(if (glow) Material.GLOW_ITEM_FRAME else Material.ITEM_FRAME)
+        stack.editMeta { m ->
+            m.persistentDataContainer[invisItemFrameKey, PersistentDataType.BYTE] = 1
+            m.displayName(plugin.messages.invisibleItemFrames.itemName(glow))
+            m.addEnchant(Enchantment.UNBREAKING, 1, true)
+            m.addItemFlags(ItemFlag.HIDE_ENCHANTS)
+        }
+        if (p.inventory.addItem(stack).isEmpty()) {
+            p.sendMessage(plugin.messages.invisibleItemFrames.giveSuccess(glow))
+        } else {
+            p.sendMessage(plugin.messages.invisibleItemFrames.giveFail())
         }
     }
 
@@ -74,5 +74,6 @@ class InvisibleItemFrames(private val plugin: CorePlugin) : WhModule, Listener {
 
     override fun disable() {
         HangingPlaceEvent.getHandlerList().unregister(this)
+        plugin.commandManager.deleteRootCommand("itemframe")
     }
 }

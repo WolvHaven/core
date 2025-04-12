@@ -27,6 +27,3 @@ val Player.isMod get() = hasPermission("group.mod") || isSrMod
 val Player.isSrMod get() = hasPermission("group.srmod") || isAdmin
 val Player.isAdmin get() = hasPermission("group.admin") || isOwner
 val Player.isOwner get() = hasPermission("group.owner")
-
-val Player.isTrainDriver get() = hasPermission("group.trainoperator") || isTrainExaminer
-val Player.isTrainExaminer get() = hasPermission("group.trainexaminer") || isAdmin

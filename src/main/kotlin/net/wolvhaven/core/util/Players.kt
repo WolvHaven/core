@@ -18,8 +18,7 @@
 
 package net.wolvhaven.core.util
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.audience.ForwardingAudience
 
-fun logger(): Logger =
-    LoggerFactory.getLogger(StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE).callerClass)
+val Iterable<Audience>.audience get() = ForwardingAudience { this }

@@ -18,94 +18,90 @@
 
 package net.wolvhaven.core.modules
 
-import cloud.commandframework.bukkit.parsers.PlayerArgument
+import com.destroystokyo.paper.profile.PlayerProfile
 import net.wolvhaven.core.CorePlugin
-import net.wolvhaven.core.util.*
+import net.wolvhaven.core.util.config
+import net.wolvhaven.core.util.logger
+import net.wolvhaven.core.util.server
+import org.bukkit.BanEntry
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import org.incendo.cloud.annotations.Command
+import org.incendo.cloud.annotations.Permission
+import org.incendo.cloud.paper.util.sender.PlayerSource
+import org.incendo.cloud.paper.util.sender.Source
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
+import java.time.Duration
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 class CPolicing(private val plugin: CorePlugin) : WhModule {
     val votes = HashMap<Player, MutableList<Player>>()
-    val config = config<CPolicingConfig>("cpolicing", plugin).also {
-        it.load()
-        it.save()
-    }
-
-    private val permRoot = "${net.wolvhaven.core.CorePlugin.permRoot}.cpolicing"
-    private val permissionExempt = "$permRoot.exempt"
-    private val permissionVote = "$permRoot.vote"
-    private val permissionAdmin = "$permRoot.admin"
+    val config =
+        config<CPolicingConfig>("cpolicing", plugin).also {
+            it.load()
+            it.save()
+        }
 
     private val threshold: Int get() = (plugin.server.onlinePlayers.size * config().percentRequired).toInt()
 
     init {
-        val base = CommandCreatorFunction {
-            it.commandBuilder("cpolicing", "cpolice")
-        }
-
-        plugin.commandManager.buildCommand(base) { b ->
-            b
-                .literal("enable")
-                .permission(permissionAdmin)
-                .handler {
-                    if (config().enabled)
-                        return@handler it.sender.sendMessage(plugin.messages.cPolicing.isAlreadyState("enabled"))
-                    config().enabled = true
-                    config.save()
-                    server.sendMessage(plugin.messages.cPolicing.isNowState("enabled"))
-                }
-        }
-
-        plugin.commandManager.buildCommand(base) { b ->
-            b
-                .literal("disable")
-                .permission(permissionAdmin)
-                .handler {
-                    if (!config().enabled)
-                        return@handler it.sender.sendMessage(plugin.messages.cPolicing.isAlreadyState("disabled"))
-                    config().enabled = false
-                    config.save()
-                    server.sendMessage(plugin.messages.cPolicing.isNowState("disabled"))
-                }
-        }
-
-        plugin.commandManager.buildCommand(base) { b ->
-            b
-                .literal("vote", "v")
-                .permission(permissionVote)
-                .senderType(Player::class.java)
-                .argument(PlayerArgument.of("target"))
-                .handler {
-                    if (!checkEnabled(it.sender)) return@handler
-                    val sender = it.sender as Player
-                    val target = it.get("target") as Player
-                    if (target.hasPermission(permissionExempt))
-                        return@handler it.sender.sendMessage(plugin.messages.cPolicing.playerExempt(target))
-                    vote(sender, target)
-                }
-        }
+        plugin.annotationParser.parse(this)
     }
 
-    fun vote(sender: Player, target: Player) {
+    @Command("cpolicing|cpolice enable|on")
+    @Permission("whcore.cpolicing.admin")
+    fun enableCommand(source: Source) {
+        if (config().enabled) return source.source().sendMessage(plugin.messages.cPolicing.isAlreadyState("enabled"))
+        config().enabled = true
+        config.save()
+        config.load()
+        server.sendMessage(plugin.messages.cPolicing.isNowState("enabled"))
+    }
+
+    @Command("cpolicing|cpolice disable|off")
+    @Permission("whcore.cpolicing.admin")
+    fun disableCommand(source: Source) {
+        if (!config().enabled) return source.source().sendMessage(plugin.messages.cPolicing.isAlreadyState("disabled"))
+        config().enabled = false
+        config.save()
+        config.load()
+        server.sendMessage(plugin.messages.cPolicing.isNowState("disabled"))
+    }
+
+    @Command("cpolicing|cpolice vote|v|voteban <target>")
+    @Permission("whcore.cpolicing.vote")
+    fun voteCommand(
+        source: PlayerSource,
+        target: Player,
+    ) {
+        if (!checkEnabled(source.source())) return
+        val sender = source.source()
+        if (target.hasPermission("whcore.cpolicing.exempt")) return sender.sendMessage(plugin.messages.cPolicing.playerExempt(target))
+
         val targetVotes = votes.computeIfAbsent(target) { ArrayList() }
-        if (targetVotes.contains(sender))
+        if (targetVotes.contains(sender)) {
             return sender.sendMessage(plugin.messages.cPolicing.alreadyVoted(target))
+        }
         targetVotes.add(sender)
         votes[target] = targetVotes // Do I need this?
         server.sendMessage(plugin.messages.cPolicing.vote(sender, target, targetVotes.size, threshold))
-        checkVotes()
-    }
 
-    fun checkVotes() {
+        // Check Votes
         votes.forEach { (k, v) ->
-            if (k.hasPermission(permissionExempt)) {
+            if (k.hasPermission("whcore.cpolicing.exempt")) {
                 votes.remove(k)
                 return@forEach
             }
             if (v.size >= threshold) {
                 server.sendMessage(plugin.messages.cPolicing.banned(k))
-                k.banPlayer("You have been banned by Community Policing. To report abuse, appeal@wolvhaven.net")
+                k.ban<BanEntry<PlayerProfile>>(
+                    "You have been banned by Community Policing. To report abuse, appeal@wolvhaven.net",
+                    null as Duration?,
+                    null,
+                    true,
+                )
                 logger().info("${k.name} has been banned by CPolice. Voters: ${v.joinToString { it.name }}")
             }
         }
@@ -114,18 +110,18 @@ class CPolicing(private val plugin: CorePlugin) : WhModule {
     fun checkEnabled(sender: CommandSender): Boolean {
         if (config().enabled) return true
         sender.sendMessage(plugin.messages.cPolicing.disabled())
-        if (sender.hasPermission(permissionAdmin)) sender.sendMessage(plugin.messages.cPolicing.promptEnable())
+        if (sender.hasPermission("whcore.cpolicing.admin")) sender.sendMessage(plugin.messages.cPolicing.promptEnable())
         return false
     }
 
-    override fun reload() {
-        config.load()
-        config.save()
+    override fun disable() {
+        plugin.commandManager.deleteRootCommand("cpolicing")
+        plugin.commandManager.deleteRootCommand("cpolice")
     }
 }
 
 @ConfigSerializable
 data class CPolicingConfig(
     val percentRequired: Float = 0.5f,
-    var enabled: Boolean = false
+    var enabled: Boolean = false,
 )

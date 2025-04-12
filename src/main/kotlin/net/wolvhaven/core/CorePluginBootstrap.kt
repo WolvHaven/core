@@ -23,16 +23,13 @@ import org.bukkit.plugin.java.JavaPlugin
 class CorePluginBootstrap : JavaPlugin() {
     val plugin: CorePlugin get() = _plugin ?: throw IllegalStateException("Attempt to get plugin while disabled!")
     private var _plugin: CorePlugin? = null
+
     override fun onEnable() {
         _plugin = CorePlugin(this)
     }
+
     override fun onDisable() {
         plugin.disable()
         _plugin = null
-    }
-
-    fun reload() {
-        isEnabled = false
-        isEnabled = true
     }
 }

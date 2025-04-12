@@ -24,14 +24,36 @@ import net.wolvhaven.core.modules.WhModule
 class WhPlaceholders(val plugin: CorePlugin) : WhModule {
     private val core = WhCorePlaceholderExpansion(this)
     private val formatting = WhFormattingPlaceholderExpansion(this)
+
     init {
         plugin.server.pluginManager.getPlugin("PlaceholderAPI")
             ?: throw IllegalStateException("PlaceholderAPI not installed!")
+        if (plugin.server.isPrimaryThread) {
+            register()
+        } else {
+            plugin.server.scheduler.runTask(plugin, Runnable {
+                register()
+            })
+        }
+    }
+
+    private fun register() {
         core.register()
         formatting.register()
     }
-    override fun disable() {
+
+    private fun unregister() {
         core.unregister()
         formatting.unregister()
+    }
+
+    override fun disable() {
+        if (plugin.server.isPrimaryThread) {
+            unregister()
+        } else {
+            plugin.server.scheduler.runTask(plugin, Runnable {
+                unregister()
+            })
+        }
     }
 }

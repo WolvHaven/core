@@ -19,7 +19,6 @@
 package net.wolvhaven.core.plugins
 
 import com.earth2me.essentials.Essentials
-import net.wolvhaven.core.util.PlayerCollection
 import net.wolvhaven.core.util.getPlugin
 import org.bukkit.entity.Player
 
@@ -30,8 +29,10 @@ object WhEssentials {
 
     var Player.afk
         get() = this.essx.isAfk
-        set(value) { this.essx.isAfk = value }
+        set(value) {
+            this.essx.isAfk = value
+        }
 
-    val PlayerCollection.afk get() = this.filter { it.afk }
-    val PlayerCollection.notAfk get() = this.filter { !it.afk }
+    val Iterable<Player>.afk get() = this.filter { it.afk }
+    val Iterable<Player>.notAfk get() = this.filter { !it.afk }
 }

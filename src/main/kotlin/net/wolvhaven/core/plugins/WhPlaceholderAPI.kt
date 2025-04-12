@@ -25,13 +25,25 @@ import org.bukkit.entity.Player
 object WhPlaceholderAPI {
     fun set(`in`: String) = PlaceholderAPI.setPlaceholders(null, `in`)
 
-    fun set(`in`: String, player: OfflinePlayer?) = PlaceholderAPI.setPlaceholders(player, `in`)
+    fun set(
+        `in`: String,
+        player: OfflinePlayer?,
+    ) = PlaceholderAPI.setPlaceholders(player, `in`)
 
-    fun set(`in`: String, player: Player?) = PlaceholderAPI.setPlaceholders(player, `in`)
+    fun set(
+        `in`: String,
+        player: Player?,
+    ) = PlaceholderAPI.setPlaceholders(player, `in`)
 
     fun setBrackets(`in`: String) = PlaceholderAPI.setBracketPlaceholders(null, `in`)
 
-    fun setBrackets(`in`: String, player: OfflinePlayer?) = PlaceholderAPI.setBracketPlaceholders(player, `in`)
+    fun setBrackets(
+        `in`: String,
+        player: OfflinePlayer?,
+    ) = PlaceholderAPI.setBracketPlaceholders(player, `in`)
 
-    fun setBrackets(`in`: String, player: Player?) = PlaceholderAPI.setBracketPlaceholders(player, `in`)
+    fun setBrackets(
+        `in`: String,
+        player: Player?,
+    ) = PlaceholderAPI.setBracketPlaceholders(player, `in`)
 }

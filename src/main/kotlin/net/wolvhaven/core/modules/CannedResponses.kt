@@ -19,42 +19,39 @@
 package net.wolvhaven.core.modules
 
 import net.wolvhaven.core.CorePlugin
-import net.wolvhaven.core.util.CommandCreatorFunction
-import net.wolvhaven.core.util.buildCommand
 import net.wolvhaven.core.util.config
+import org.incendo.cloud.kotlin.extension.buildAndRegister
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 
 class CannedResponses(private val plugin: CorePlugin) : WhModule {
-    private val config = config<CannedResponsesConfig>("canned", plugin).also {
-        it.load()
-        it.save()
-    }
+    private val config =
+        config<CannedResponsesConfig>("canned", plugin).also {
+            it.load()
+            it.save()
+        }
 
     init {
         for (response in config().responses) {
-            plugin.commandManager.buildCommand(
-                CommandCreatorFunction { m ->
-                    m
-                        .commandBuilder(response.key)
-                        .handler { c ->
-                            c.sender.sendMessage(plugin.messages.miniMessage.deserialize(response.value))
-                        }
+            plugin.commandManager.buildAndRegister(response.key) {
+                handler { c ->
+                    c.sender().source().sendMessage(plugin.messages.miniMessage.deserialize(response.value))
                 }
-            )
+            }
         }
     }
 
-    // Note: Reloading does not register new commands, no great way to do that. Reload the entire plugin to register new commands
-    override fun reload() {
-        config.load()
-        config.save()
+    override fun disable() {
+        for (response in config().responses) {
+            plugin.commandManager.deleteRootCommand(response.key)
+        }
     }
 }
 
 @ConfigSerializable
 data class CannedResponsesConfig(
-    val responses: Map<String, String> = mapOf(
-        "rules" to "<whprefix><whformat:info><bold>Rules</bold></whformat>",
-        "ranks" to "<whprefix><whformat:info><bold>Ranks</bold></whformat>"
-    )
+    val responses: Map<String, String> =
+        mapOf(
+            "rules" to "<whprefix><whformat:info><bold>Rules</bold></whformat>",
+            "ranks" to "<whprefix><whformat:info><bold>Ranks</bold></whformat>",
+        ),
 )

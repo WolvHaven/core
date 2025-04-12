@@ -18,138 +18,100 @@
 
 package net.wolvhaven.core.modules
 
-import cloud.commandframework.arguments.flags.CommandFlag
-import cloud.commandframework.arguments.standard.EnumArgument
-import cloud.commandframework.arguments.standard.StringArgument
 import net.wolvhaven.core.CorePlugin
 import net.wolvhaven.core.plugins.WhPlaceholderAPI
-import net.wolvhaven.core.util.*
-import org.bukkit.Bukkit
+import net.wolvhaven.core.util.Sounds
+import net.wolvhaven.core.util.audience
+import net.wolvhaven.core.util.isAdmin
+import net.wolvhaven.core.util.isStaff
+import net.wolvhaven.core.util.logger
+import net.wolvhaven.core.util.server
 import org.bukkit.OfflinePlayer
-import org.bukkit.command.CommandSender
+import org.incendo.cloud.annotation.specifier.Greedy
+import org.incendo.cloud.annotation.specifier.Quoted
+import org.incendo.cloud.annotations.Command
+import org.incendo.cloud.annotations.Commands
+import org.incendo.cloud.annotations.Flag
+import org.incendo.cloud.annotations.Permission
+import org.incendo.cloud.paper.util.sender.Source
 
 class Core(private val plugin: CorePlugin) : WhModule {
     init {
-        val base = CommandCreatorFunction {
-            it.commandBuilder("wolvhavencore", "whcore", "wh")
-        }
+        plugin.annotationParser.parse(this)
+    }
 
-        val bcastBase = CommandCreatorFunction {
-            it.commandBuilder("bcast", "broadcast", "bc")
-        }
+    @Commands(Command("wolvhavencore|whcore|wh broadcast|bc|bcast <content>"), Command("broadcst|bc|bcast <content>"))
+    @Permission("whcore.broadcast")
+    fun broadcastCommand(
+        source: Source,
+        @Greedy content: String,
+    ) {
+        server.sendMessage(
+            plugin.messages.core.broadcast(WhPlaceholderAPI.set(content, source.source() as? OfflinePlayer), source.source()),
+        )
+        server.onlinePlayers.audience.playSound(Sounds.DING.sound)
+    }
 
-        val bcastModifier = CommandModifierFunction { b ->
-            b
-                .permission("${CorePlugin.permRoot}.broadcast")
-                .argument(StringArgument.greedy("content"))
-                .handler { c ->
-                    server.sendMessage(plugin.messages.core.broadcast(WhPlaceholderAPI.set(c["content"], c.sender as? OfflinePlayer), c.sender))
-                    onlinePlayers.playSound(Sounds.DING.sound)
+    @Command("wolvhavencore|whcore|wh advancedbroadcast|advbc|advbcast <content>")
+    @Permission("whcore.broadcast")
+    fun advancedBroadcastCommand(
+        source: Source,
+        @Quoted content: String,
+        @Flag("staff", aliases = ["s"]) staffOnly: Boolean,
+        @Flag("admin", aliases = ["a"]) adminOnly: Boolean,
+        @Flag("ding", aliases = ["d"]) ding: Boolean,
+        @Flag("perm", aliases = ["p"]) requirePermission: String?,
+    ) {
+        val message = plugin.messages.miniMessage.deserialize(WhPlaceholderAPI.set(content, source.source() as? OfflinePlayer))
+        val players =
+            server.onlinePlayers.filter {
+                    p ->
+                (!staffOnly || p.isStaff) && (!adminOnly || p.isAdmin) && (requirePermission == null || p.hasPermission(requirePermission))
+            }
+
+        players.audience.sendMessage(message)
+        server.consoleSender.sendMessage(message)
+        if (ding) players.audience.playSound(Sounds.DING.sound)
+    }
+
+    @Command("wolvhavencore|whcore|wh reload|rl messages")
+    @Permission("whcore.reload")
+    fun reloadMessagesCommand(source: Source) {
+        try {
+            plugin.messages.config.load()
+            plugin.messages.config.save()
+        } catch (e: Exception) {
+            source.source().sendMessage(plugin.messages.core.reloadFail("messages", e.toString()))
+            logger().error("Message reload failed: ", e)
+            return
+        }
+        source.source().sendMessage(plugin.messages.core.reloadSuccess("messages"))
+    }
+
+    @Command("wolvhavencore|whcore|wh reload|rl module <module>")
+    @Permission("whcore.reload")
+    fun reloadModuleCommand(
+        source: Source,
+        module: WhModuleType,
+    ) {
+        try {
+            when (module.reloadType) {
+                ReloadType.NOT_RELOADABLE -> {
+                    return source.source().sendMessage(plugin.messages.core.reloadFail("module", "Module not reloadable!"))
                 }
-        }
-        plugin.commandManager.buildCommand(bcastBase, bcastModifier)
-        plugin.commandManager.buildCommand(base, bcastModifier)
-
-        plugin.commandManager.buildCommand(base) { b ->
-            b
-                .literal("advancedbroadcast", "advbcast", "advbc")
-                .argument(StringArgument.quoted("content"))
-                .permission("${CorePlugin.permRoot}.broadcast")
-                .flag(CommandFlag.builder("ding"))
-                .flag(CommandFlag.builder("perm").withArgument(StringArgument.of<CommandSender>("perm")))
-                .flag(CommandFlag.builder("staff"))
-                .flag(CommandFlag.builder("admin"))
-                .handler { c ->
-                    val message = plugin.messages.miniMessage.deserialize(WhPlaceholderAPI.set(c["content"], c.sender as? OfflinePlayer))
-
-                    val playerCollection = if (c.flags().isPresent("admin")) onlinePlayers.filtered { it.isAdmin }
-                    else if (c.flags().isPresent("staff")) onlinePlayers.filtered { it.isStaff }
-                    else if (c.flags().getValue<String>("perm").isPresent) onlinePlayers.filtered {
-                        it.hasPermission(
-                            c.flags().getValue<String>("perm").orElse("aboajfhawlkdfalfw")
-                        )
-                    }
-                    else onlinePlayers
-
-                    playerCollection.sendMessage(message)
-                    Bukkit.getServer().consoleSender.sendMessage(message)
-
-                    if (c.flags().isPresent("ding")) playerCollection.playSound(Sounds.DING.sound)
+                ReloadType.RELOAD_METHOD -> {
+                    plugin.modules[module]?.reload() ?: throw IllegalStateException("Attempted to reload unknown module $module")
                 }
+                ReloadType.RECREATE -> {
+                    plugin.modules[module]?.disable() ?: throw IllegalStateException("Attempted to reload unknown module $module")
+                    plugin.modules[module] = module.creator(plugin)
+                }
+            }
+        } catch (e: Exception) {
+            source.source().sendMessage(plugin.messages.core.reloadFail("module", e.toString()))
+            logger().error("Module reload failed: ", e)
+            return
         }
-
-        val reloadModifier = CommandModifierFunction { b ->
-            b
-                .literal("reload", "rl")
-                .permission("${CorePlugin.permRoot}.reload")
-        }
-
-        plugin.commandManager.buildCommand(
-            base, reloadModifier,
-            CommandModifierFunction { b ->
-                b
-                    .literal("plugin")
-                    .handler { c ->
-                        try {
-                            plugin.bootstrap.reload()
-                        } catch (e: Exception) {
-                            c.sender.sendMessage(plugin.messages.core.reloadFail("plugin", e.toString()))
-                            logger().error("Plugin reload failed: ", e)
-                            return@handler
-                        }
-                        c.sender.sendMessage(plugin.messages.core.reloadSuccess("plugin"))
-                    }
-            }
-        )
-
-        plugin.commandManager.buildCommand(
-            base, reloadModifier,
-            CommandModifierFunction { b ->
-                b
-                    .literal("messages")
-                    .handler { c ->
-                        try {
-                            plugin.messages.config.load()
-                            plugin.messages.config.save()
-                        } catch (e: Exception) {
-                            c.sender.sendMessage(plugin.messages.core.reloadFail("messages", e.toString()))
-                            logger().error("Message reload failed: ", e)
-                            return@handler
-                        }
-                        c.sender.sendMessage(plugin.messages.core.reloadSuccess("messages"))
-                    }
-            }
-        )
-
-        plugin.commandManager.buildCommand(
-            base, reloadModifier,
-            CommandModifierFunction { b ->
-                b
-                    .literal("module")
-                    .argument(EnumArgument.of(WhModuleType::class.java, "module"))
-                    .handler { c ->
-                        try {
-                            val moduleType: WhModuleType = c["module"]
-                            when (moduleType.reloadType) {
-                                ReloadType.NOT_RELOADABLE -> {
-                                    return@handler c.sender.sendMessage(plugin.messages.core.reloadFail("module", "Module not reloadable!"))
-                                }
-                                ReloadType.RELOAD_METHOD -> {
-                                    plugin.modules[moduleType]?.reload() ?: throw IllegalStateException("Attempted to reload unknown module $moduleType")
-                                }
-                                ReloadType.RECREATE -> {
-                                    plugin.modules[moduleType]?.disable() ?: throw IllegalStateException("Attempted to reload unknown module $moduleType")
-                                    plugin.modules[moduleType] = moduleType.creator(plugin)
-                                }
-                            }
-                        } catch (e: Exception) {
-                            c.sender.sendMessage(plugin.messages.core.reloadFail("module", e.toString()))
-                            logger().error("Module reload failed: ", e)
-                            return@handler
-                        }
-                        c.sender.sendMessage(plugin.messages.core.reloadSuccess("module"))
-                    }
-            }
-        )
+        source.source().sendMessage(plugin.messages.core.reloadSuccess("module"))
     }
 }
