@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "net.wolvhaven"
-version = "1.2.0-SNAPSHOT"
+version = "1.2.1-SNAPSHOT"
 
 val ktReflect = "org.jetbrains.kotlin:kotlin-reflect:2.1.10"
 
